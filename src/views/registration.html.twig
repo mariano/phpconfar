@@ -1,0 +1,72 @@
+{% extends 'layout.html.twig' %}
+
+{% block content %}
+
+<h1>Registration</h1>
+
+<form action="#" method="post">
+	{{ form_widget(form) }}
+
+	<input type="submit" name="submit" value="Search" class="btn btn-large btn-primary" />
+</form>
+
+{% if tickets is defined %}
+	{% for ticket in tickets %}
+		<div class="well">
+			<dl class="dl-horizontal">
+				<dt>Ticket:</dt>
+				<dd>{{ ticket.code }}</dd>
+				<dt>Email:</dt>
+				<dd>{{ ticket.email }}</dd>
+				<dt>Name:</dt>
+				<dd>{{ ticket.first_name }} {{ ticket.last_name }}</dd>
+				<dt>Vendor:</dt>
+				<dd>{{ ticket.source }}</dd>
+			</dl>
+
+			<div class="row-fluid">
+				<div class="pull-left">
+					<form action="/checkin" method="POST">
+						<input type="hidden" name="day" value="1" />
+						<input type="hidden" name="code" value="{{ ticket.code }}" />
+						<input type="hidden" name="source" value="{{ ticket.source }}" />
+						{% if ticket.checkin_day1 %}
+							<input type="submit" value="Uncheck in for Day 1" class="btn btn-danger" />
+						{% else %}
+							<input type="submit" value="Check in for Day 1" class="btn btn-primary" />
+						{% endif %}
+					</form>
+				</div>
+				<div class="pull-left">&nbsp;</div>
+				<div class="pull-left">
+					<form action="/checkin" method="POST">
+						<input type="hidden" name="day" value="2" />
+						<input type="hidden" name="code" value="{{ ticket.code }}" />
+						<input type="hidden" name="source" value="{{ ticket.source }}" />
+						{% if ticket.checkin_day2 %}
+							<input type="submit" value="Uncheck in for Day 2" class="btn btn-danger" />
+						{% else %}
+							<input type="submit" value="Check in for Day 2" class="btn btn-primary" />
+						{% endif %}
+					</form>
+				</div>
+				<div class="pull-left">&nbsp;</div>
+				<div class="pull-left">
+					<a href="/edit/{{ ticket.id }}" class="btn btn-info">Edit details</a>
+				</div>
+			</div>
+		</div>
+	{% endfor %}
+{% endif %}
+
+{% endblock %}
+
+{% block js_content %}
+	<script type="text/javascript">
+	(function($) {
+		$(function() {
+			$("#form_code").focus();
+		});
+	})(jQuery);
+	</script>
+{% endblock %}

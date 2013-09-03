@@ -1,0 +1,5 @@
+cache/*
+src/config.ini
+vendor/
+*.sw[opn]
+composer.lock
