@@ -6,6 +6,7 @@ namespace Repository;
  * From KnpSilexExtensions (https://github.com/KnpLabs/KnpSilexExtensions)
  */
 
+use PDO;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -67,8 +68,8 @@ abstract class Repository
 
     /**
      * Returns a record by supplied id
-     * 
-     * @param mixed $id 
+     *
+     * @param mixed $id
      * @return array
      */
     public function find($id)
@@ -78,11 +79,25 @@ abstract class Repository
 
     /**
      * Returns all records from this repository's table
-     * 
+     *
      * @return array
      */
-    public function findAll()
+    public function findAll($fields = null, $limit = null)
     {
-        return $this->db->fetchAll(sprintf('SELECT * FROM %s', $this->getTableName()));
+		if (empty($fields)) {
+			$fields = '*';
+		} else {
+			$fields = implode(',', $fields);
+		}
+		$query = 'SELECT ' . $fields . ' FROM %s';
+		$parameters = array();
+		$parameterTypes = array();
+		if (!empty($limit)) {
+			$query .= ' LIMIT ?';
+			$parameters[] = (int) $limit;
+			$parameterTypes[] = PDO::PARAM_INT;
+		}
+		$statement = $this->db->executeQuery(sprintf($query, $this->getTableName()), $parameters, $parameterTypes);
+		return $statement->fetchAll();
     }
 }

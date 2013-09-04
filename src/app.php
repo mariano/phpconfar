@@ -1,22 +1,6 @@
 <?php
-/**
-
-CREATE TABLE `attendees`(
-	`id` INT NOT NULL AUTO_INCREMENT,
-	`code` VARCHAR(255) NOT NULL,
-	`source` ENUM('eventioz', 'evenbrite') NOT NULL,
-	`email` VARCHAR(255) NOT NULL,
-	`first_name` VARCHAR(255) default NULL,
-	`last_name` VARCHAR(255) default NULL,
-	`checkin_day1` DATETIME default NULL,
-	`checkin_day2` DATETIME default NULL,
-	PRIMARY KEY(`id`),
-	UNIQUE KEY `attendees__code__source`(`source`, `code`)
-);
-
-*/
-
 require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__ . '/config.php';
 
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
@@ -27,21 +11,12 @@ use Silex\Provider\TranslationServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\User\User;
 use Symfony\Component\Validator\Constraints;
 use Repository\AttendeeRepository;
 
-$env = getenv('APPLICATION_ENV') ? getenv('APPLICATION_ENV') : 'production';
-$settings = parse_ini_file(__DIR__.'/config.ini', TRUE);
-$config = array();
-foreach($settings[$env] as $key => $value) {
-	if (strpos($key, '.') !== false) {
-		list($key, $innerKey) = explode('.', $key);
-		$config[$key][$innerKey] = $value;
-	} else {
-		$config[$key] = $value;
-	}
-}
-
+$config = config();
 if (empty($config['db']) || empty($config['urls']) || empty($config['users'])) {
 	throw new Exception('Missing configuration');
 }
@@ -51,7 +26,7 @@ $app['debug'] = true;
 
 $app->register(new TwigServiceProvider(), array(
     'twig.path' => __DIR__.'/views',
-    'twig.options' => array('cache' => __DIR__.'/../cache'),
+    //'twig.options' => array('cache' => __DIR__.'/../cache'),
 ));
 $app->register(new DoctrineServiceProvider());
 $app->register(new FormServiceProvider());
@@ -61,10 +36,12 @@ $app->register(new TranslationServiceProvider());
 $app->register(new ValidatorServiceProvider());
 
 $securityUsers = array();
-foreach($config['users'] as $userName => $password) {
-	$user = new \Symfony\Component\Security\Core\User\User($userName, $password);
-	$encoder = $app['security.encoder_factory']->getEncoder($user);
-	$securityUsers[$userName] = array('ROLE_MANAGE', $encoder->encodePassword($password, $user->getSalt()));
+foreach($config['users'] as $role => $users) {
+	foreach($users as $userName => $password) {
+		$user = new User($userName, $password);
+		$encoder = $app['security.encoder_factory']->getEncoder($user);
+		$securityUsers[$userName] = array($role, $encoder->encodePassword($password, $user->getSalt()));
+	}
 }
 
 $app['security.firewalls'] = array(
@@ -83,14 +60,21 @@ $app['db.options'] = array(
 );
 
 $app->before(function() use ($app) {
+	if (count(array_intersect(array('manager', 'admin'), $app['security']->getToken()->getUser()->getRoles())) === 0) {
+		$app->abort(403, "You do not have the required credentials");
+	}
+
     $app['db.attendee'] = $app->share(function($app) {
         return new AttendeeRepository($app['db']);
     });
+
 	$flash = $app['session']->get('flash');
 	if (!empty($flash)) {
 		$app['session']->set('flash', null);
 		$app['twig']->addGlobal('flash', $flash);
 	}
+
+	$app['twig']->addGlobal('roles', $app['security']->getToken()->getUser()->getRoles());
 });
 
 $app->get('/', function() use($app) {
@@ -104,7 +88,7 @@ $app->post('/checkin', function(Request $request) use($app) {
 		!$request->request->get('day') ||
 		!in_array($request->request->get('day'), array('1', '2'))
 	) {
-		$app->abort(503, "Missing required data");
+		$app->abort(400, "Missing required data");
 	}
 
 	$record = $app['db.attendee']->findOneByCode($request->request->get('code'), $request->request->get('source'));
@@ -141,7 +125,7 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 		->add('source', 'choice', array(
 			'choices' => array('eventioz' => 'Eventioz', 'evenbrite' => 'Evenbrite'),
 			'required' => false,
-			'empty_value' => '-- Figure it out yourself --',
+			'empty_value' => '-- Pick ticket source --',
 			'empty_data' => null,
 			'constraints' => array(new Constraints\NotBlank(), new Constraints\Choice(array('eventioz', 'evenbrite'))),
 		))
@@ -157,6 +141,13 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 			'constraints' => array(new Constraints\NotBlank()),
 			'label' => 'First name:',
 		))
+		->add('role', 'choice', array(
+			'choices' => array('attendee' => 'Attendee', 'speaker' => 'Speaker', 'support' => 'Support', 'organizer' => 'Organizer'),
+			'required' => false,
+			'empty_value' => '-- Pick a role --',
+			'empty_data' => null,
+			'constraints' => array(new Constraints\NotBlank(), new Constraints\Choice(array('attendee', 'speaker', 'support', 'organizer'))),
+		))
 		->getForm();
 
 	if ('POST' === $request->getMethod()) {
@@ -169,6 +160,12 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 				'title' => 'Record updated',
 				'message' => 'You have successfully updated the record'
 			));
+		} else {
+			$app['session']->set('flash', array(
+				'type' => 'error',
+				'title' => 'Validation failed',
+				'message' => 'Please correct the errors marked below'
+			));
 		}
 	}
 
@@ -179,6 +176,9 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 });
 
 $app->match('/import', function(Request $request) use($app, $config) {
+	if (!in_array('admin', $app['security']->getToken()->getUser()->getRoles())) {
+		$app->abort(403, "You do not have the required credentials");
+	}
 	if ('POST' === $request->getMethod()) {
 		$result = $app['db.attendee']->import($config);
 	}
@@ -187,12 +187,8 @@ $app->match('/import', function(Request $request) use($app, $config) {
 
 $app->match('/registration', function(Request $request) use($app) {
 	$form = $app['form.factory']->createBuilder('form')
-		->add('code', 'text', array(
-			'constraints' => array(new Constraints\NotBlank(), new Constraints\Length(array('min' => 2))),
-			'label' => 'Code / Email / Name:',
-			'attr' => array(
-				'class' => 'input-xxlarge'
-			)
+		->add('code', 'search', array(
+			'constraints' => array(new Constraints\NotBlank(), new Constraints\Length(array('min' => 2)))
 		))
 		->getForm();
 
@@ -208,6 +204,21 @@ $app->match('/registration', function(Request $request) use($app) {
 		'section' => 'registration',
 		'form' => $form->createView()
 	) + (!empty($tickets) ? compact('tickets') : array()));
+});
+
+$app->match('/raffle', function(Request $request) use($app) {
+	if (in_array('application/json', $request->getAcceptableContentTypes())) {
+		$result = $app['db.attendee']->raffle();
+		return new Response(json_encode($result), 200, array('Content-type' => 'application/json'));
+	}
+	$records = $app['db.attendee']->findAll(array('first_name', 'last_name'), 500);
+	foreach($records as $i => $record) {
+		$records[$i] = trim(implode(' ', $record));
+	}
+    return $app['twig']->render('raffle.html.twig', array(
+		'section' => 'raffle',
+		'names' => array_filter(array_unique($records))
+	));
 });
 
 return $app;

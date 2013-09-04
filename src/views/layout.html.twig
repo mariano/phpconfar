@@ -3,43 +3,34 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-
-        <title></title>
+        <title>PHP Conference Argentina</title>
         <meta name="description" content="">
         <meta name="author" content="">
-
         <meta name="viewport" content="width=device-width">
-
         <link rel="stylesheet" href="/css/bootstrap.min.css">
-        <style>
-        body {
-        padding-top: 60px;
-        padding-bottom: 40px;
-        }
-        </style>
-        <link rel="stylesheet" href="/css/bootstrap-responsive.min.css">
-        <link rel="stylesheet" href="/css/style.css">
-
-        <script src="js/libs/modernizr-2.6.1.custom.js"></script>
     </head>
     <body>
-        <div class="navbar navbar-fixed-top">
-            <div class="navbar-inner">
-                <div class="container">
-                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </a>
-                    <a class="brand" href="#">PHP Conference Argentina</a>
-                    <div class="nav-collapse">
-                        <ul class="nav">
-                            <li {% if section == "home" %}class="active"{% endif %}><a href="/">Home</a></li>
-                            <li {% if section == "registration" %}class="active"{% endif %}><a href="/registration">Registration</a></li>
-                            <li {% if section == "import" %}class="active"{% endif %}><a href="/import">Import</a></li>
-                        </ul>
-                    </div><!--/.nav-collapse -->
-                </div>
+        <div class="navbar navbar-default" role="navigation">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="/">PHP Conference Argentina</a>
+			</div>
+			<div class="collapse navbar-collapse navbar-ex1-collapse">
+				<ul class="nav navbar-nav">
+					<li {% if section == "home" %}class="active"{% endif %}><a href="/">Home</a></li>
+					{% if "admin" in roles or "manager" in roles %}
+						<li {% if section == "registration" %}class="active"{% endif %}><a href="/registration">Registration</a></li>
+						<li {% if section == "raffle" %}class="active"{% endif %}><a href="/raffle">Raffle</a></li>
+					{% endif %}
+					{% if "admin" in roles %}
+						<li {% if section == "import" %}class="active"{% endif %}><a href="/import">Import</a></li>
+					{% endif %}
+				</ul>
             </div>
         </div>
 
@@ -58,10 +49,7 @@
 
         </div> <!-- /container -->
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
-        <script>window.jQuery || document.write('<script src="js/libs/jquery-1.8.0.min.js"><\/script>')</script>
-
-        <script src="js/libs/bootstrap/transition.js"></script>
-        <script src="js/libs/bootstrap/collapse.js"></script>
+        <script src="/js/bootstrap.min.js"></script>
         {% block js_content %}{% endblock %}
     </body>
 </html>

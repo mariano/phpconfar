@@ -4,13 +4,17 @@
 
 <h1>Registration</h1>
 
-<form action="#" method="post">
-	{{ form_widget(form) }}
+{{ form_start(form, { 'attr': {'role': 'form'} }) }}
+	<div class="form-group">{{ form_row(form.code, {
+		'label':false, 
+		'attr':{'class':'form-control', 'placeholder': 'Scan barcode/QR code, or enter email or name'}
+	}) }}</div>
 
-	<input type="submit" name="submit" value="Search" class="btn btn-large btn-primary" />
-</form>
+	<button type="submit" class="btn btn-large btn-primary">Search</button>
+{{ form_end(form) }}
 
 {% if tickets is defined %}
+	<br />
 	{% for ticket in tickets %}
 		<div class="well">
 			<dl class="dl-horizontal">

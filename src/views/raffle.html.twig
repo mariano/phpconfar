@@ -1,0 +1,76 @@
+{% extends 'layout.html.twig' %}
+
+{% block content %}
+
+<h1>Poll</h1>
+
+{% if result is defined %}
+	<p><strong>{{ imported }}</strong> records imported and <strong>{{ ignored }}</strong> records ignored.</p>
+{% else %}
+	<p>Press the following button to import records from ticket sources.</p>
+
+	<p><a href="#" id="raffle" class="btn btn-primary btn-large">Pick someone :]</a></p>
+
+	<p><center><span style="font-size: 50pt; font-weight: bold; display:none;" id="chosen">We have a winner!</span></center></p>
+	<p><center><span style="font-size: 40pt;" id="winner"></span></center></p>
+{% endif %}
+
+{% endblock %}
+
+{% block js_content %}
+	<script type="text/javascript">
+	(function($) {
+		$(function() {
+			var names = {{ names|json_encode|raw }},
+				$winner = $("#winner"),
+				originalColor = $winner.css('color'),
+				wonColor = "rgb(255, 0, 0)",
+				$chosen = $("#chosen"),
+				pause,
+				pauseDelay,
+				i;
+
+			var raffle = function() {
+				$winner.text(names[i]);
+				i++;
+				if (i == names.length) {
+					i = 0;
+				}
+
+				if (pauseDelay > 0) {
+					pauseDelay -= pause;
+				} else {
+					pause *= (1 + (Math.random() * .1));
+				}
+
+				if (pause >= 400) {
+					$.ajax({
+						dataType: "json",
+						url: "/raffle",
+						success: function(data) {
+							var name = data && data.first_name && data.last_name ? data.first_name + ' ' + data.last_name : 'Nobody? :[';
+							$winner.text(name).css('color', wonColor);
+							$chosen.show();
+						},
+						error: function(a, b, c) {
+							$winner.text("Oops, houston, we have a problem!");
+						}
+					});
+				} else {
+					setTimeout(raffle, pause);
+				}
+			};
+
+			$("#raffle").click(function(e) {
+				e.preventDefault();
+				$chosen.hide();
+				$winner.text('').css('color', originalColor);
+				i = 0;
+				pause = 50;
+				pauseDelay = (4500 + (Math.random() * 2000));
+				setTimeout(raffle, pause);
+			});
+		});
+	})(jQuery);
+	</script>
+{% endblock %}
