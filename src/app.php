@@ -11,7 +11,6 @@ use Silex\Provider\TranslationServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\User\User;
 use Symfony\Component\Validator\Constraints;
 use Repository\AttendeeRepository;
@@ -206,8 +205,7 @@ $app->match('/registration', function(Request $request) use($app) {
 
 $app->match('/raffle', function(Request $request) use($app) {
 	if (in_array('application/json', $request->getAcceptableContentTypes())) {
-		$result = $app['db.attendee']->raffle();
-		return new Response(json_encode($result), 200, array('Content-type' => 'application/json'));
+		return $app->json($app['db.attendee']->raffle());
 	}
 	$records = $app['db.attendee']->findAll(array('first_name', 'last_name'), 500);
 	foreach($records as $i => $record) {
