@@ -2,7 +2,7 @@
 function config($env = null) {
 	$environments = array('production', 'staging', 'development');
 	if (empty($env)) {
-		$env = getenv('APPLICATION_ENV') ? getenv('APPLICATION_ENV') : 'production';
+		$env = 'production';
 	}
 	if (!in_array($env, $environments)) {
 		throw new InvalidArgumentException("Invalid environment {$env}");
