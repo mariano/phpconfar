@@ -40,11 +40,18 @@ foreach($config['users'] as $role => $users) {
 		$securityUsers[$userName] = array($role, $encoder->encodePassword($password, $user->getSalt()));
 	}
 }
-
 $app['security.firewalls'] = array(
-	'default' => array(
-		'http' => true,
-		'users' => $securityUsers
+	'login' => array(
+		'pattern' => '^/(login)?$'
+	),
+	'secured' => array(
+		'users' => $securityUsers,
+		'form' => array(
+			'login_path' => '/login',
+			'check_path' => '/login_check',
+			'default_target_path' => '/registration'
+		),
+		'logout' => array('logout_path' => '/logout')
 	)
 );
 
@@ -56,8 +63,8 @@ $app['db.options'] = array(
     'password' => $config['db']['password'],
 );
 
-$app->before(function() use ($app) {
-	if (count(array_intersect(array('manager', 'admin'), $app['security']->getToken()->getUser()->getRoles())) === 0) {
+$app->before(function(Request $request) use ($app) {
+	if (!in_array($request->get('_route'), array('GET_', '_login')) && count(array_intersect(array('manager', 'admin'), $app['security']->getToken()->getUser()->getRoles())) === 0) {
 		$app->abort(403, "You do not have the required credentials");
 	}
 
@@ -71,11 +78,21 @@ $app->before(function() use ($app) {
 		$app['twig']->addGlobal('flash', $flash);
 	}
 
-	$app['twig']->addGlobal('roles', $app['security']->getToken()->getUser()->getRoles());
+	if ($app['security']->getToken()) {
+		$app['twig']->addGlobal('roles', $app['security']->getToken()->getUser()->getRoles());
+	}
 });
 
 $app->get('/', function() use($app) {
     return $app['twig']->render('index.html.twig', array('section' => 'home'));
+});
+
+$app->match('/login', function(Request $request) use ($app) {
+	return $app['twig']->render('login.html.twig', array(
+		'error'         => $app['security.last_error']($request),
+		'last_username' => $app['session']->get('_security.last_username'),
+		'section' => 'login'
+	));
 });
 
 $app->post('/checkin', function(Request $request) use($app) {

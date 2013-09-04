@@ -22,13 +22,17 @@
 			</div>
 			<div class="collapse navbar-collapse navbar-ex1-collapse">
 				<ul class="nav navbar-nav">
-					<li {% if section == "home" %}class="active"{% endif %}><a href="/">Home</a></li>
-					{% if "admin" in roles or "manager" in roles %}
-						<li {% if section == "registration" %}class="active"{% endif %}><a href="/registration">Registration</a></li>
-						<li {% if section == "raffle" %}class="active"{% endif %}><a href="/raffle">Raffle</a></li>
-					{% endif %}
-					{% if "admin" in roles %}
-						<li {% if section == "import" %}class="active"{% endif %}><a href="/import">Import</a></li>
+					{% if roles is defined %}
+						{% if "admin" in roles or "manager" in roles %}
+							<li {% if section == "registration" %}class="active"{% endif %}><a href="/registration">Registration</a></li>
+							<li {% if section == "raffle" %}class="active"{% endif %}><a href="/raffle">Raffle</a></li>
+						{% endif %}
+						{% if "admin" in roles %}
+							<li {% if section == "import" %}class="active"{% endif %}><a href="/import">Import</a></li>
+						{% endif %}
+						<li><a href="/logout">Logout</a></li>
+					{% else %}
+						<li {% if section == "login" %}class="active"{% endif %}><a href="/login">Login</a></li>
 					{% endif %}
 				</ul>
             </div>
