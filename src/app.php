@@ -192,12 +192,14 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 				'title' => 'Record updated',
 				'message' => 'You have successfully updated the record'
 			));
+			return $app->redirect('/registration');
 		} else {
 			$app['session']->set('flash', array(
 				'type' => 'error',
 				'title' => 'Validation failed',
 				'message' => 'Please correct the errors marked below'
 			));
+			$app['twig']->addGlobal('flash', $app['session']->get('flash'));
 		}
 	}
 
