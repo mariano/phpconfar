@@ -23,11 +23,11 @@
 			<div class="collapse navbar-collapse navbar-ex1-collapse">
 				<ul class="nav navbar-nav">
 					{% if roles is defined %}
-						{% if "admin" in roles or "manager" in roles %}
+						{% if "ROLE_ADMIN" in roles or "ROLE_MANAGER" in roles %}
 							<li {% if section == "registration" %}class="active"{% endif %}><a href="/registration">Registration</a></li>
 							<li {% if section == "raffle" %}class="active"{% endif %}><a href="/raffle">Raffle</a></li>
 						{% endif %}
-						{% if "admin" in roles %}
+						{% if "ROLE_ADMIN" in roles %}
 							<li {% if section == "import" %}class="active"{% endif %}><a href="/import">Import</a></li>
 						{% endif %}
 						<li><a href="/logout">Logout</a></li>

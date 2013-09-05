@@ -12,6 +12,7 @@ use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\User;
+use Symfony\Component\Security\Core\User\InMemoryUserProvider;
 use Symfony\Component\Validator\Constraints;
 use Repository\AttendeeRepository;
 
@@ -27,33 +28,54 @@ $app->register(new TwigServiceProvider(), array(
 ));
 $app->register(new DoctrineServiceProvider());
 $app->register(new FormServiceProvider());
-$app->register(new SecurityServiceProvider());
 $app->register(new SessionServiceProvider());
 $app->register(new TranslationServiceProvider());
 $app->register(new ValidatorServiceProvider());
-
-$securityUsers = array();
-foreach($config['users'] as $role => $users) {
-	foreach($users as $userName => $password) {
-		$user = new User($userName, $password);
-		$encoder = $app['security.encoder_factory']->getEncoder($user);
-		$securityUsers[$userName] = array($role, $encoder->encodePassword($password, $user->getSalt()));
-	}
-}
-$app['security.firewalls'] = array(
-	'login' => array(
-		'pattern' => '^/(login)?$'
-	),
-	'secured' => array(
-		'users' => $securityUsers,
-		'form' => array(
-			'login_path' => '/login',
-			'check_path' => '/login_check',
-			'default_target_path' => '/registration'
+$app->register(new SecurityServiceProvider(), array(
+	'security.firewalls' => array(
+		'login' => array(
+			'pattern' => '^/(login)?$'
 		),
-		'logout' => array('logout_path' => '/logout')
+		'secured' => array(
+			'users' => function(Application $app) use($config) {
+				$securityUsers = array();
+				foreach($config['users'] as $role => $users) {
+					foreach($users as $userName => $password) {
+						$user = new User($userName, $password);
+						$encoder = $app['security.encoder_factory']->getEncoder($user);
+						$role = 'ROLE_' . strtoupper($role);
+						$securityUsers[$userName] = array(
+							'roles' => array($role),
+							'password' => $encoder->encodePassword($password, $user->getSalt())
+						);
+					}
+				}
+				return new InMemoryUserProvider($securityUsers);
+			},
+			'form' => array(
+				'login_path' => '/login',
+				'check_path' => '/login_check',
+				'failure_path' => '/login',
+				'default_target_path' => '/registration',
+				'always_use_default_target_path' => true
+			),
+			'logout' => array(
+				'logout_path' => '/logout',
+				'target' => '/',
+				'invalidate_session' => true
+			)
+		)
+	),
+	'security.access_rules' => array(
+		array('^/import$', 'ROLE_ADMIN'),
+		array('^/.*$', 'ROLE_MANAGER'),
+		array('^/login$', 'IS_AUTHENTICATED_ANONYMOUSLY'),
+		array('^/$', 'IS_AUTHENTICATED_ANONYMOUSLY')
+	),
+	'security.role_hierarchy' => array(
+		'ROLE_ADMIN' => array('ROLE_MANAGER')
 	)
-);
+));
 
 $app['db.options'] = array(
     'driver'   => $config['db']['driver'],
@@ -64,10 +86,6 @@ $app['db.options'] = array(
 );
 
 $app->before(function(Request $request) use ($app) {
-	if (!in_array($request->get('_route'), array('GET_', '_login')) && count(array_intersect(array('manager', 'admin'), $app['security']->getToken()->getUser()->getRoles())) === 0) {
-		$app->abort(403, "You do not have the required credentials");
-	}
-
     $app['db.attendee'] = $app->share(function($app) {
         return new AttendeeRepository($app['db']);
     });
@@ -190,7 +208,7 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 });
 
 $app->match('/import', function(Request $request) use($app, $config) {
-	if (!in_array('admin', $app['security']->getToken()->getUser()->getRoles())) {
+	if (!in_array('ROLE_ADMIN', $app['security']->getToken()->getUser()->getRoles())) {
 		$app->abort(403, "You do not have the required credentials");
 	}
 	if ('POST' === $request->getMethod()) {
