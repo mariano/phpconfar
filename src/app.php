@@ -186,7 +186,7 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 		$form->bind($request);
 		if ($form->isValid()) {
 			$data = $form->getData();
-			$app['db.attendee']->update(array_intersect_key($data, array('source'=>null, 'email'=>null, 'first_name'=>null, 'last_name'=>null)), compact('id'));
+			$app['db.attendee']->update(array_intersect_key($data, array('source'=>null, 'email'=>null, 'first_name'=>null, 'last_name'=>null, 'role'=>null)), compact('id'));
 			$app['session']->set('flash', array(
 				'type' => 'success',
 				'title' => 'Record updated',
