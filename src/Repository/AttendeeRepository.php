@@ -95,13 +95,18 @@ class AttendeeRepository extends Repository
 			return array();
 		}
 
-		$search = preg_replace('/\s/', '%', $search);
-		$result = $this->db->fetchAll(sprintf('SELECT * FROM %s WHERE code LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?', $this->getTableName()), array(
-			'%' . $search . '%',
-			'%' . $search . '%',
-			'%' . $search . '%',
-			'%' . $search . '%'
-		));
+		$query = 'SELECT * FROM %s WHERE ';
+		$parameters = array();
+		foreach(explode(' ', preg_replace('/\s/', ' ', $search)) as $i => $word) {
+			$query .= ($i > 0 ? ' OR ' : '') . 'code LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?';
+			$parameters = array_merge($parameters, array(
+				'%' . $word . '%',
+				'%' . $word . '%',
+				'%' . $word . '%',
+				'%' . $word . '%'
+			));
+		}
+		$result = $this->db->fetchAll(sprintf($query, $this->getTableName()), $parameters);
 		if (empty($result)) {
 			return null;
 		}
