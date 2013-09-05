@@ -208,9 +208,6 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 });
 
 $app->match('/import', function(Request $request) use($app, $config) {
-	if (!in_array('ROLE_ADMIN', $app['security']->getToken()->getUser()->getRoles())) {
-		$app->abort(403, "You do not have the required credentials");
-	}
 	if ('POST' === $request->getMethod()) {
 		$result = $app['db.attendee']->import($config);
 	}
