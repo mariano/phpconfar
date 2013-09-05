@@ -95,6 +95,7 @@ class AttendeeRepository extends Repository
 			return array();
 		}
 
+		$search = preg_replace('/\s/', '%', $search);
 		$result = $this->db->fetchAll(sprintf('SELECT * FROM %s WHERE code LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?', $this->getTableName()), array(
 			'%' . $search . '%',
 			'%' . $search . '%',
