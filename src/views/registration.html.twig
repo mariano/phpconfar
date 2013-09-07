@@ -10,13 +10,14 @@
 		'attr':{'class':'form-control', 'placeholder': 'Scan barcode/QR code, or enter email or name'}
 	}) }}</div>
 
-	<button type="submit" class="btn btn-large btn-primary">Search</button>
-
-	<a href="/registration/1" class="btn btn-link">All tickets</a>
+	<p>
+		<button type="submit" class="btn btn-large btn-primary">Search</button>
+		<a href="/registration/1" class="btn btn-link">All tickets</a>
+	</p>
 {{ form_end(form) }}
 
 {% if tickets is defined %}
-	<br />
+	<p><strong>{{tickets|length}}</strong> tickets found.</p>
 	{% for ticket in tickets %}
 		<div class="well ticket-{{ ticket.role }}">
 			<dl class="dl-horizontal">
