@@ -88,6 +88,11 @@ class AttendeeRepository extends Repository
 		return $this->db->fetchAssoc(sprintf($query, $this->getTableName()), $params);
 	}
 
+	public function tickets()
+	{
+		return $this->db->fetchAll(sprintf('SELECT * FROM %s ORDER BY first_name, last_name', $this->getTableName()));
+	}
+
 	public function findTicket($search)
 	{
 		$search = trim($search);
@@ -113,8 +118,8 @@ class AttendeeRepository extends Repository
 		return $result;
 	}
 
-   public function elegible($fields = null, $limit = null)
-   {
+	public function elegible($fields = null, $limit = null)
+	{
 		if (empty($fields)) {
 			$fields = '*';
 		} else {

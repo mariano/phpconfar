@@ -24,8 +24,9 @@ if (empty($config['db']) || empty($config['urls']) || empty($config['users'])) {
 $app = new Silex\Application();
 $app->register(new TwigServiceProvider(), array(
     'twig.path' => __DIR__.'/views',
-    'twig.options' => array('cache' => __DIR__.'/../cache'),
+//    'twig.options' => array('cache' => __DIR__.'/../cache'),
 ));
+$app['debug'] = true;
 $app->register(new DoctrineServiceProvider());
 $app->register(new FormServiceProvider());
 $app->register(new SessionServiceProvider());
@@ -216,7 +217,7 @@ $app->match('/import', function(Request $request) use($app, $config) {
     return $app['twig']->render('import.html.twig', array('section' => 'import') + (!empty($result) ? $result : array()));
 });
 
-$app->match('/registration', function(Request $request) use($app) {
+$app->match('/registration/{all}', function($all, Request $request) use($app) {
 	$form = $app['form.factory']->createBuilder('form')
 		->add('code', 'search', array(
 			'constraints' => array(new Constraints\NotBlank(), new Constraints\Length(array('min' => 2)))
@@ -229,13 +230,15 @@ $app->match('/registration', function(Request $request) use($app) {
 			$data = $form->getData();
 			$tickets = $app['db.attendee']->findTicket($data['code']);
 		}
+	} else if (!empty($all)) {
+		$tickets = $app['db.attendee']->tickets();
 	}
 
     return $app['twig']->render('registration.html.twig', array(
 		'section' => 'registration',
 		'form' => $form->createView()
 	) + (!empty($tickets) ? compact('tickets') : array()));
-});
+})->value('all', null);
 
 $app->match('/raffle', function(Request $request) use($app) {
 	if (in_array('application/json', $request->getAcceptableContentTypes())) {

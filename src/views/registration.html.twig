@@ -11,12 +11,14 @@
 	}) }}</div>
 
 	<button type="submit" class="btn btn-large btn-primary">Search</button>
+
+	<a href="/registration/1" class="btn btn-link">All tickets</a>
 {{ form_end(form) }}
 
 {% if tickets is defined %}
 	<br />
 	{% for ticket in tickets %}
-		<div class="well">
+		<div class="well ticket-{{ ticket.role }}">
 			<dl class="dl-horizontal">
 				<dt>Ticket:</dt>
 				<dd>{{ ticket.code }}</dd>
@@ -26,6 +28,8 @@
 				<dd>{{ ticket.first_name }} {{ ticket.last_name }}</dd>
 				<dt>Vendor:</dt>
 				<dd>{{ ticket.source }}</dd>
+				<dt>Role:</dt>
+				<dd><strong>{{ ticket.role|title }}</strong></dd>
 			</dl>
 
 			<div class="row-fluid">
@@ -58,6 +62,7 @@
 				<div class="pull-left">
 					<a href="/edit/{{ ticket.id }}" class="btn btn-info">Edit details</a>
 				</div>
+				<div class="clearfix"></div>
 			</div>
 		</div>
 	{% endfor %}
