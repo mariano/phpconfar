@@ -139,7 +139,7 @@ $app->post('/checkin', function(Request $request) use($app) {
 		'message' => 'Checkin status updated!'
 	]);
 
-	return $app->redirect('/registration');
+	return $app->redirect('/registration?q=' . urlencode($record['code']));
 });
 
 $app->match('/edit/{id}', function($id, Request $request) use($app) {
@@ -192,7 +192,7 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 				'title' => 'Record updated',
 				'message' => 'You have successfully updated the record'
 			]);
-			return $app->redirect('/registration');
+			return $app->redirect('/registration?q=' . urlencode($record['code']));
 		} else {
 			$app['session']->set('flash', [
 				'type' => 'error',
@@ -217,8 +217,10 @@ $app->match('/import', function(Request $request) use($app, $config) {
 });
 
 $app->match('/registration/{all}', function($all, Request $request) use($app) {
+	$search = $request->query->get('q');
 	$form = $app['form.factory']->createBuilder('form')
 		->add('code', 'search', [
+			'data' => $search,
 			'constraints' => [new Constraints\NotBlank(), new Constraints\Length(['min' => 2])]
 		])
 		->getForm();
@@ -227,8 +229,12 @@ $app->match('/registration/{all}', function($all, Request $request) use($app) {
 		$form->bind($request);
 		if ($form->isValid()) {
 			$data = $form->getData();
-			$tickets = $app['db.attendee']->findTicket($data['code']);
+			$search = $data['code'];
 		}
+	}
+
+	if (!empty($search)) {
+		$tickets = $app['db.attendee']->findTicket($search);
 	} else if (!empty($all)) {
 		$tickets = $app['db.attendee']->tickets();
 	}
