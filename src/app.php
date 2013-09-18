@@ -163,7 +163,7 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 		])
 		->add('email', 'text', [
 			'constraints' => [new Constraints\Email()],
-			'label' => 'First name:',
+			'label' => 'Email:',
 		])
 		->add('first_name', 'text', [
 			'constraints' => [new Constraints\NotBlank()],
@@ -171,7 +171,7 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 		])
 		->add('last_name', 'text', [
 			'constraints' => [new Constraints\NotBlank()],
-			'label' => 'First name:',
+			'label' => 'Last name:',
 		])
 		->add('role', 'choice', [
 			'choices' => ['attendee' => 'Attendee', 'speaker' => 'Speaker', 'support' => 'Support', 'organizer' => 'Organizer'],
