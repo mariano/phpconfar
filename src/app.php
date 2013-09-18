@@ -174,11 +174,11 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 			'label' => 'Last name:',
 		])
 		->add('role', 'choice', [
-			'choices' => ['attendee' => 'Attendee', 'speaker' => 'Speaker', 'support' => 'Support', 'organizer' => 'Organizer'],
+			'choices' => ['attendee' => 'Attendee', 'speaker' => 'Speaker', 'support' => 'Support', 'organizer' => 'Organizer', 'deleted' => 'Deleted'],
 			'required' => false,
 			'empty_value' => '-- Pick a role --',
 			'empty_data' => null,
-			'constraints' => [new Constraints\NotBlank(), new Constraints\Choice(['attendee', 'speaker', 'support', 'organizer'])],
+			'constraints' => [new Constraints\NotBlank(), new Constraints\Choice(['attendee', 'speaker', 'support', 'organizer', 'deleted'])],
 		])
 		->getForm();
 

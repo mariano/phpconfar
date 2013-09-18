@@ -25,7 +25,7 @@ CREATE TABLE `attendees`(
 	`last_name` VARCHAR(255) default NULL,
 	`checkin_day1` DATETIME default NULL,
 	`checkin_day2` DATETIME default NULL,
-	`role` ENUM('attendee', 'speaker', 'support', 'organizer') NOT NULL default 'attendee',
+	`role` ENUM('attendee', 'deleted', 'organizer', 'speaker', 'support') NOT NULL default 'attendee',
 	PRIMARY KEY(`id`),
 	UNIQUE KEY `attendees__code__source`(`source`, `code`)
 );

@@ -90,7 +90,7 @@ class AttendeeRepository extends Repository
 
 	public function tickets()
 	{
-		return $this->db->fetchAll(sprintf('SELECT * FROM %s ORDER BY first_name, last_name', $this->getTableName()));
+		return $this->db->fetchAll(sprintf('SELECT * FROM %s WHERE role != ? ORDER BY id, first_name, last_name', $this->getTableName()), array('deleted'));
 	}
 
 	public function findTicket($search)
