@@ -278,18 +278,25 @@ $app->match('/registration/{all}', function($all, Request $request) use($app) {
 })->value('all', null);
 
 $app->match('/raffle/{role}', function($role, Request $request) use($app) {
-	if (in_array('application/json', $request->getAcceptableContentTypes())) {
-		return $app->json($app['db.attendee']->raffle($role));
+	if (empty($role)) {
+		$roles = ['attendee'];
+	} else {
+		$roles = explode(',', $role);
 	}
-	$records = $app['db.attendee']->findByRole($role, ['first_name', 'last_name'], 500);
+
+	if (in_array('application/json', $request->getAcceptableContentTypes())) {
+		return $app->json($app['db.attendee']->raffle($roles));
+	}
+	$records = $app['db.attendee']->findByRole($roles, ['first_name', 'last_name'], 500);
 	foreach($records as $i => $record) {
 		$records[$i] = trim(implode(' ', $record));
 	}
+
     return $app['twig']->render('raffle.html.twig', [
 		'section' => 'raffle',
 		'role' => $role,
 		'names' => array_filter(array_unique($records))
 	]);
-})->value('role', 'attendee');
+})->value('role', null);
 
 return $app;

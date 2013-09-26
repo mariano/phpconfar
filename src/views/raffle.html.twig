@@ -45,7 +45,7 @@
 				if (pause >= 400) {
 					$.ajax({
 						dataType: "json",
-						url: "/raffle/{{role}}",
+						url: "/raffle{% if role %}/{{role}}{% endif %}",
 						success: function(data) {
 							var name = data && data.first_name && data.last_name ? data.first_name + ' ' + data.last_name : 'Nobody? :[';
 							$winner.text(name).css('color', wonColor);

@@ -137,12 +137,21 @@ class AttendeeRepository extends Repository
 		return $statement->fetchAll();
 	}
 
-	public function raffle($role)
+	public function raffle(array $roles)
 	{
-		return $this->db->fetchAssoc(sprintf('SELECT * FROM %s WHERE role=? ORDER BY RAND() LIMIT 1', $this->getTableName()), [$role]);
+		$query = 'SELECT * FROM %s WHERE role IN (';
+		foreach(array_values($roles) as $i => $role) {
+			$query .= ($i > 0 ? ', ' : '') . '?';
+			$parameters[] = $role;
+			$parameterTypes[] = PDO::PARAM_STR;
+		}
+		$query .= ') ORDER BY RAND() LIMIT 1';
+		$statement = $this->db->executeQuery(sprintf($query, $this->getTableName()), $parameters, $parameterTypes);
+		$result = $statement->fetchAll();
+		return (!empty($result) ? $result[0] : null);
 	}
 
-    public function findByRole($role, $fields = null, $limit = null)
+    public function findByRole(array $roles, $fields = null, $limit = null)
     {
 		if (empty($fields)) {
 			$fields = '*';
@@ -153,13 +162,15 @@ class AttendeeRepository extends Repository
 		$parameters = [];
 		$parameterTypes = [];
 
-		$query = 'SELECT ' . $fields . ' FROM %s';
+		$query = 'SELECT ' . $fields . ' FROM %s WHERE role IN (';
 
-		if (!empty($role)) {
-			$query .= ' WHERE role=?';
+		foreach(array_values($roles) as $i => $role) {
+			$query .= ($i > 0 ? ', ' : '') . '?';
 			$parameters[] = $role;
 			$parameterTypes[] = PDO::PARAM_STR;
 		}
+
+		$query .= ')';
 
 		if (!empty($limit)) {
 			$query .= ' LIMIT ?';
