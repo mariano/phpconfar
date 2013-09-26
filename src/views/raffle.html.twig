@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<h1>Poll</h1>
+<h1>{% if role == 'corporate' %}Corporate {% endif %}Poll</h1>
 
 <p>Press the following button to import records from ticket sources.</p>
 
@@ -48,6 +48,12 @@
 						url: "/raffle{% if role %}/{{role}}{% endif %}",
 						success: function(data) {
 							var name = data && data.first_name && data.last_name ? data.first_name + ' ' + data.last_name : 'Nobody? :[';
+							if (data.role == 'corporate') {
+								var domain = data.email.substring(data.email.indexOf('@') + 1).trim();
+								if (domain.length > 0) {
+									name += " [" + domain + "]";
+								}
+							}
 							$winner.text(name).css('color', wonColor);
 							$chosen.show();
 						},
