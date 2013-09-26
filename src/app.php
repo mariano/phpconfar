@@ -24,8 +24,9 @@ if (empty($config['db']) || empty($config['urls']) || empty($config['users'])) {
 $app = new Silex\Application();
 $app->register(new TwigServiceProvider(), [
     'twig.path' => __DIR__.'/views',
-    'twig.options' => ['cache' => __DIR__.'/../cache'],
+//    'twig.options' => ['cache' => __DIR__.'/../cache'],
 ]);
+$app['debug'] = true;
 $app->register(new DoctrineServiceProvider());
 $app->register(new FormServiceProvider());
 $app->register(new SessionServiceProvider());
@@ -174,11 +175,11 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 			'label' => 'Last name:',
 		])
 		->add('role', 'choice', [
-			'choices' => ['attendee' => 'Attendee', 'speaker' => 'Speaker', 'support' => 'Support', 'organizer' => 'Organizer', 'deleted' => 'Deleted'],
+			'choices' => ['attendee' => 'Attendee', 'corporate' => 'Corporate', 'deleted' => 'Deleted', 'organizer' => 'Organizer', 'speaker' => 'Speaker', 'support' => 'Support'],
 			'required' => false,
 			'empty_value' => '-- Pick a role --',
 			'empty_data' => null,
-			'constraints' => [new Constraints\NotBlank(), new Constraints\Choice(['attendee', 'speaker', 'support', 'organizer', 'deleted'])],
+			'constraints' => [new Constraints\NotBlank(), new Constraints\Choice(['attendee', 'corporate', 'deleted', 'organizer', 'speaker', 'support'])],
 		])
 		->getForm();
 
@@ -216,6 +217,38 @@ $app->match('/import', function(Request $request) use($app, $config) {
     return $app['twig']->render('import.html.twig', ['section' => 'import'] + (!empty($result) ? $result : []));
 });
 
+$app->match('/registrations.csv', function() use($app) {
+	return $app->stream(function() use($app) {
+		$tickets = $app['db.attendee']->tickets();
+
+		$stdout = fopen('php://output', 'w');
+
+		fputcsv($stdout, [
+			'Email',
+			'Ticket',
+			'First name',
+			'Last name',
+			'Role',
+			'Source'
+		]);
+
+		foreach($tickets as $ticket) {
+			fputcsv($stdout, [
+				$ticket['email'],
+				$ticket['code'],
+				$ticket['first_name'],
+				$ticket['last_name'],
+				$ticket['role'],
+				$ticket['source']
+			]);
+		}
+		fclose($stdout);
+	}, 200, [
+		'Content-Type' => 'text/csv',
+		'Content-disposition' => 'attachment; filename="registrations.csv"'
+	]);
+});
+
 $app->match('/registration/{all}', function($all, Request $request) use($app) {
 	$search = $request->query->get('q');
 	$form = $app['form.factory']->createBuilder('form')
@@ -245,18 +278,19 @@ $app->match('/registration/{all}', function($all, Request $request) use($app) {
 	] + (!empty($tickets) ? compact('tickets') : []));
 })->value('all', null);
 
-$app->match('/raffle', function(Request $request) use($app) {
+$app->match('/raffle/{role}', function($role, Request $request) use($app) {
 	if (in_array('application/json', $request->getAcceptableContentTypes())) {
-		return $app->json($app['db.attendee']->raffle());
+		return $app->json($app['db.attendee']->raffle($role));
 	}
-	$records = $app['db.attendee']->findAll(['first_name', 'last_name'], 500);
+	$records = $app['db.attendee']->findByRole($role, ['first_name', 'last_name'], 500);
 	foreach($records as $i => $record) {
 		$records[$i] = trim(implode(' ', $record));
 	}
     return $app['twig']->render('raffle.html.twig', [
 		'section' => 'raffle',
+		'role' => $role,
 		'names' => array_filter(array_unique($records))
 	]);
-});
+})->value('role', 'attendee');
 
 return $app;

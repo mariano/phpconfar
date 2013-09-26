@@ -13,7 +13,7 @@ class AttendeeRepository extends Repository
 
 	public function import(array $config)
 	{
-		$tickets = array();
+		$tickets = [];
 
 		// Import from Evenbrite
 		$contents = file_get_contents($config['urls']['evenbrite']);
@@ -26,14 +26,14 @@ class AttendeeRepository extends Repository
 					}
 
 					for($ticket=1; $ticket <= $record['attendee']['quantity']; $ticket++) {
-						$tickets[] = array(
+						$tickets[] = [
 							'code' => $record['attendee']['order_id'] . $record['attendee']['id'] . str_pad($ticket, 3, '0', STR_PAD_LEFT),
 							'source' => 'evenbrite',
 							'email' => $record['attendee']['email'],
 							'first_name' => $record['attendee']['first_name'],
 							'last_name' => $record['attendee']['last_name'],
 							'role' => 'attendee'
-						);
+						];
 					}
 				}
 			}
@@ -47,14 +47,14 @@ class AttendeeRepository extends Repository
 				if (empty($record['registration']) || empty($record['registration']['purchased_at'])) {
 					continue;
 				}
-				$tickets[] = array(
+				$tickets[] = [
 					'code' => $record['registration']['accreditation_code'],
 					'source' => 'eventioz',
 					'email' => $record['registration']['email'],
 					'first_name' => $record['registration']['first_name'],
 					'last_name' => $record['registration']['last_name'],
 					'role' => 'attendee'
-				);
+				];
 			}
 		}
 
@@ -78,7 +78,7 @@ class AttendeeRepository extends Repository
 
 	public function findOneByCode($code, $source)
 	{
-		$params = array($code);
+		$params = [$code];
 		$query = 'SELECT * FROM %s WHERE code=?';
 		if (!empty($source)) {
 			$params[] = $source;
@@ -90,26 +90,26 @@ class AttendeeRepository extends Repository
 
 	public function tickets()
 	{
-		return $this->db->fetchAll(sprintf('SELECT * FROM %s WHERE role != ? ORDER BY id, first_name, last_name', $this->getTableName()), array('deleted'));
+		return $this->db->fetchAll(sprintf('SELECT * FROM %s WHERE role != ? ORDER BY id, first_name, last_name', $this->getTableName()), ['deleted']);
 	}
 
 	public function findTicket($search)
 	{
 		$search = trim($search);
 		if (empty($search)) {
-			return array();
+			return [];
 		}
 
 		$query = 'SELECT * FROM %s WHERE ';
-		$parameters = array();
+		$parameters = [];
 		foreach(explode(' ', preg_replace('/\s/', ' ', $search)) as $i => $word) {
 			$query .= ($i > 0 ? ' OR ' : '') . 'code LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?';
-			$parameters = array_merge($parameters, array(
+			$parameters = array_merge($parameters, [
 				'%' . $word . '%',
 				'%' . $word . '%',
 				'%' . $word . '%',
 				'%' . $word . '%'
-			));
+			]);
 		}
 		$result = $this->db->fetchAll(sprintf($query, $this->getTableName()), $parameters);
 		if (empty($result)) {
@@ -126,8 +126,8 @@ class AttendeeRepository extends Repository
 			$fields = implode(',', $fields);
 		}
 		$query = 'SELECT ' . $fields . ' FROM %s WHERE role=?';
-		$parameters = array('attendee');
-		$parameterTypes = array(PDO::PARAM_STRING);
+		$parameters = ['attendee'];
+		$parameterTypes = [PDO::PARAM_STRING];
 		if (!empty($limit)) {
 			$query .= ' LIMIT ?';
 			$parameters[] = (int) $limit;
@@ -137,7 +137,38 @@ class AttendeeRepository extends Repository
 		return $statement->fetchAll();
 	}
 
-	public function raffle() {
-		return $this->db->fetchAssoc(sprintf('SELECT * FROM attendees WHERE role=? ORDER BY RAND() LIMIT 1'), array('attendee'));
+	public function raffle($role)
+	{
+		return $this->db->fetchAssoc(sprintf('SELECT * FROM %s WHERE role=? ORDER BY RAND() LIMIT 1', $this->getTableName()), [$role]);
 	}
+
+    public function findByRole($role, $fields = null, $limit = null)
+    {
+		if (empty($fields)) {
+			$fields = '*';
+		} else {
+			$fields = implode(',', $fields);
+		}
+
+		$parameters = [];
+		$parameterTypes = [];
+
+		$query = 'SELECT ' . $fields . ' FROM %s';
+
+		if (!empty($role)) {
+			$query .= ' WHERE role=?';
+			$parameters[] = $role;
+			$parameterTypes[] = PDO::PARAM_STR;
+		}
+
+		if (!empty($limit)) {
+			$query .= ' LIMIT ?';
+			$parameters[] = (int) $limit;
+			$parameterTypes[] = PDO::PARAM_INT;
+		}
+
+		$statement = $this->db->executeQuery(sprintf($query, $this->getTableName()), $parameters, $parameterTypes);
+		return $statement->fetchAll();
+    }
+
 }
