@@ -24,9 +24,8 @@ if (empty($config['db']) || empty($config['urls']) || empty($config['users'])) {
 $app = new Silex\Application();
 $app->register(new TwigServiceProvider(), [
     'twig.path' => __DIR__.'/views',
-//    'twig.options' => ['cache' => __DIR__.'/../cache'],
+    'twig.options' => ['cache' => __DIR__.'/../cache'],
 ]);
-$app['debug'] = true;
 $app->register(new DoctrineServiceProvider());
 $app->register(new FormServiceProvider());
 $app->register(new SessionServiceProvider());

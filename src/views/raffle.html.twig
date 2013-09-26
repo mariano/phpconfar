@@ -4,16 +4,15 @@
 
 <h1>Poll</h1>
 
-{% if result is defined %}
-	<p><strong>{{ imported }}</strong> records imported and <strong>{{ ignored }}</strong> records ignored.</p>
-{% else %}
-	<p>Press the following button to import records from ticket sources.</p>
+<p>Press the following button to import records from ticket sources.</p>
 
-	<p><a href="#" id="raffle" class="btn btn-primary btn-large">Pick someone :]</a></p>
+<p>
+<a href="#" id="raffle" class="btn btn-primary btn-large">Pick someone :]</a>
+{% if role != 'corporate' %} <a href="/raffle/corporate" class="btn btn-link">Corporate Raffle</a>{% endif %}
+</p>
 
-	<p><center><span style="font-size: 50pt; font-weight: bold; display:none;" id="chosen">We have a winner!</span></center></p>
-	<p><center><span style="font-size: 40pt;" id="winner"></span></center></p>
-{% endif %}
+<p><center><span style="font-size: 50pt; font-weight: bold; display:none;" id="chosen">We have a winner!</span></center></p>
+<p><center><span style="font-size: 40pt;" id="winner"></span></center></p>
 
 {% endblock %}
 
