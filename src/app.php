@@ -148,6 +148,18 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 		$app->abort(404, "Attendee #$id does not exist.");
 	}
 
+	$roles = [
+		'attendee' => 'Attendee',
+		'corporate' => 'Corporate',
+		'deleted' => 'Deleted',
+		'organizer' => 'Organizer',
+		'press' => 'Press',
+		'provider' => 'Provider',
+		'returned' => 'Returned',
+		'speaker' => 'Speaker',
+		'support' => 'Support'
+	];
+
 	$form = $app['form.factory']->createBuilder('form', $record)
 		->add('code', 'text', [
 			'constraints' => [new Constraints\NotBlank(), new Constraints\Length(['min' => 2])],
@@ -174,11 +186,11 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 			'label' => 'Last name:',
 		])
 		->add('role', 'choice', [
-			'choices' => ['attendee' => 'Attendee', 'corporate' => 'Corporate', 'deleted' => 'Deleted', 'organizer' => 'Organizer', 'speaker' => 'Speaker', 'support' => 'Support'],
+			'choices' => $roles,
 			'required' => false,
 			'empty_value' => '-- Pick a role --',
 			'empty_data' => null,
-			'constraints' => [new Constraints\NotBlank(), new Constraints\Choice(['attendee', 'corporate', 'deleted', 'organizer', 'speaker', 'support'])],
+			'constraints' => [new Constraints\NotBlank(), new Constraints\Choice(array_keys($roles))],
 		])
 		->getForm();
 
@@ -186,7 +198,13 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 		$form->bind($request);
 		if ($form->isValid()) {
 			$data = $form->getData();
-			$app['db.attendee']->update(array_intersect_key($data, ['source'=>null, 'email'=>null, 'first_name'=>null, 'last_name'=>null, 'role'=>null]), compact('id'));
+			$app['db.attendee']->update(array_intersect_key($data, [
+				'source'=>null,
+				'email'=>null,
+				'first_name'=>null,
+				'last_name'=>null,
+				'role'=>null
+			]), compact('id'));
 			$app['session']->set('flash', [
 				'type' => 'success',
 				'title' => 'Record updated',
