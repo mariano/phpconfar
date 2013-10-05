@@ -42,7 +42,7 @@
 					pause *= (1 + (Math.random() * .1));
 				}
 
-				if (pause >= 400) {
+				if (pause >= 100) {
 					$.ajax({
 						dataType: "json",
 						url: "/raffle{% if role %}/{{role}}{% endif %}",
