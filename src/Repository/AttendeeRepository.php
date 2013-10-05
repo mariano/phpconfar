@@ -139,13 +139,15 @@ class AttendeeRepository extends Repository
 
 	public function raffle(array $roles)
 	{
+		$seed = rand();
 		$query = 'SELECT * FROM %s WHERE role IN (';
 		foreach(array_values($roles) as $i => $role) {
 			$query .= ($i > 0 ? ', ' : '') . '?';
 			$parameters[] = $role;
 			$parameterTypes[] = PDO::PARAM_STR;
 		}
-		$query .= ') ORDER BY RAND() LIMIT 1';
+		$query .= ') ORDER BY RAND('.$seed.') LIMIT 1';
+		
 		$statement = $this->db->executeQuery(sprintf($query, $this->getTableName()), $parameters, $parameterTypes);
 		$result = $statement->fetchAll();
 		return (!empty($result) ? $result[0] : null);
