@@ -1,6 +1,6 @@
 <?php
 function config($env = null) {
-	$environments = array('production', 'staging', 'development');
+	$environments = ['production', 'staging', 'development'];
 	if (empty($env)) {
 		$env = 'production';
 	}
@@ -8,7 +8,7 @@ function config($env = null) {
 		throw new InvalidArgumentException("Invalid environment {$env}");
 	}
 
-	$config = array();
+	$config = [];
 	foreach(parse_ini_file(__DIR__.'/config.ini', true) as $group => $settings) {
 		if (in_array($group, $environments) && $group !== $env) {
 			continue;

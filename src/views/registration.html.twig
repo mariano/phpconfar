@@ -22,6 +22,8 @@
 	{% for ticket in tickets %}
 		<div class="well ticket-{{ ticket.role }}">
 			<dl class="dl-horizontal">
+				<dt>Ticket type:</dt>
+				<dd>{{ ticket.ticket_type }}</dd>
 				<dt>Ticket:</dt>
 				<dd>{{ ticket.code }}</dd>
 				<dt>Email:</dt>

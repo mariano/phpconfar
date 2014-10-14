@@ -166,6 +166,12 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 			'label' => 'Code:',
 			'disabled' => true
 		])
+		->add('ticket_type', 'choice',[
+			'choices' => ['conference' => 'Conference only', 'gaucho' => 'Gaucho only', 'conference_gaucho' => 'Conference & Gaucho'],
+			'required' => true,
+			'empty_value' => '-- Pick ticket type --',
+			'constraints' => [new Constraints\NotBlank(), new Constraints\Choice(['conference', 'gaucho', 'conference_gaucho'])],
+		])
 		->add('source', 'choice',[
 			'choices' => ['eventioz' => 'Eventioz', 'evenbrite' => 'Evenbrite'],
 			'required' => false,
@@ -199,6 +205,7 @@ $app->match('/edit/{id}', function($id, Request $request) use($app) {
 		if ($form->isValid()) {
 			$data = $form->getData();
 			$app['db.attendee']->update(array_intersect_key($data, [
+				'ticket_type'=>null,
 				'source'=>null,
 				'email'=>null,
 				'first_name'=>null,
@@ -241,6 +248,7 @@ $app->match('/registrations.csv', function() use($app) {
 		$stdout = fopen('php://output', 'w');
 
 		fputcsv($stdout, [
+			'Ticket type',
 			'Email',
 			'Ticket',
 			'First name',
@@ -251,6 +259,7 @@ $app->match('/registrations.csv', function() use($app) {
 
 		foreach($tickets as $ticket) {
 			fputcsv($stdout, [
+				$ticket['ticket_type'],
 				$ticket['email'],
 				$ticket['code'],
 				$ticket['first_name'],
