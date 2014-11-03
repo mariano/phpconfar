@@ -17,65 +17,62 @@
 {% endblock %}
 
 {% block js_content %}
-	<script type="text/javascript">
-	(function($) {
-		$(function() {
-			var names = {{ names|json_encode|raw }},
-				$winner = $("#winner"),
-				originalColor = $winner.css('color'),
-				wonColor = "rgb(255, 0, 0)",
-				$chosen = $("#chosen"),
-				pause,
-				pauseDelay,
-				i;
+    <script type="text/javascript">
+    (function($) {
+        $(function() {
+            var names = $.map({{ names|json_encode|raw }}, function(value, index) { return [value]; }),
+                $winner = $("#winner"),
+                originalColor = $winner.css('color'),
+                wonColor = "rgb(255, 0, 0)",
+                $chosen = $("#chosen"),
+                pause,
+                pauseDelay,
+                i;
 
-			var raffle = function() {
-				$winner.text(names[i]);
-				i++;
-				if (i == names.length) {
-					i = 0;
-				}
+            var raffle = function() {
+                i = Math.floor(Math.random() * names.length);
+                $winner.text(names[i]);
 
-				if (pauseDelay > 0) {
-					pauseDelay -= pause;
-				} else {
-					pause *= (1 + (Math.random() * .1));
-				}
+                if (pauseDelay > 0) {
+                    pauseDelay -= pause;
+                } else {
+                    pause *= (1 + (Math.random() * .1));
+                }
 
-				if (pause >= 100) {
-					$.ajax({
-						dataType: "json",
-						url: "/raffle{% if role %}/{{role}}{% endif %}",
-						success: function(data) {
-							var name = data && data.first_name && data.last_name ? data.first_name + ' ' + data.last_name : 'Nobody? :[';
-							if (data.role == 'corporate') {
-								var domain = data.email.substring(data.email.indexOf('@') + 1).trim();
-								if (domain.length > 0) {
-									name += " [" + domain + "]";
-								}
-							}
-							$winner.text(name).css('color', wonColor);
-							$chosen.show();
-						},
-						error: function(a, b, c) {
-							$winner.text("Oops, houston, we have a problem!");
-						}
-					});
-				} else {
-					setTimeout(raffle, pause);
-				}
-			};
+                if (pause >= 100) {
+                    $.ajax({
+                        dataType: "json",
+                        url: "/raffle{% if role %}/{{role}}{% endif %}",
+                        success: function(data) {
+                            var name = data && data.first_name && data.last_name ? data.first_name + ' ' + data.last_name : 'Nobody? :[';
+                            if (data.role == 'corporate') {
+                                var domain = data.email.substring(data.email.indexOf('@') + 1).trim();
+                                if (domain.length > 0) {
+                                    name += " [" + domain + "]";
+                                }
+                            }
+                            $winner.text(name).css('color', wonColor);
+                            $chosen.show();
+                        },
+                        error: function(a, b, c) {
+                            $winner.text("Oops, houston, we have a problem!");
+                        }
+                    });
+                } else {
+                    setTimeout(raffle, pause);
+                }
+            };
 
-			$("#raffle").click(function(e) {
-				e.preventDefault();
-				$chosen.hide();
-				$winner.text('').css('color', originalColor);
-				i = 0;
-				pause = 50;
-				pauseDelay = (4500 + (Math.random() * 2000));
-				setTimeout(raffle, pause);
-			});
-		});
-	})(jQuery);
-	</script>
+            $("#raffle").click(function(e) {
+                e.preventDefault();
+                $chosen.hide();
+                $winner.text('').css('color', originalColor);
+                i = 0;
+                pause = 50;
+                pauseDelay = (4500 + (Math.random() * 2000));
+                setTimeout(raffle, pause);
+            });
+        });
+    })(jQuery);
+    </script>
 {% endblock %}
