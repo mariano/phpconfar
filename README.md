@@ -27,6 +27,7 @@ CREATE TABLE `attendees`(
     `checkin_day2` DATETIME default NULL,
     `role` ENUM('attendee', 'corporate', 'deleted', 'organizer', 'press', 'provider', 'returned', 'speaker', 'support') NOT NULL default 'attendee',
     `ticket_type` ENUM('conference', 'gaucho', 'conference_gaucho') NOT NULL default 'conference',
+    `raffled` TINYINT(1) NOT NULL default 0,
     PRIMARY KEY(`id`),
     UNIQUE KEY `attendees__code__source`(`source`, `code`)
 );

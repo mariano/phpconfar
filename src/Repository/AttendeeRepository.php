@@ -149,25 +149,6 @@ class AttendeeRepository extends Repository
         return $result;
     }
 
-    public function elegible($fields = null, $limit = null)
-    {
-        if (empty($fields)) {
-            $fields = '*';
-        } else {
-            $fields = implode(',', $fields);
-        }
-        $query = 'SELECT ' . $fields . ' FROM %s WHERE role=?';
-        $parameters = ['attendee'];
-        $parameterTypes = [PDO::PARAM_STRING];
-        if (!empty($limit)) {
-            $query .= ' LIMIT ?';
-            $parameters[] = (int) $limit;
-            $parameterTypes[] = PDO::PARAM_INT;
-        }
-        $statement = $this->db->executeQuery(sprintf($query, $this->getTableName()), $parameters, $parameterTypes);
-        return $statement->fetchAll();
-    }
-
     public function raffle(array $roles)
     {
         $seed = rand();
@@ -181,10 +162,16 @@ class AttendeeRepository extends Repository
 
         $statement = $this->db->executeQuery(sprintf($query, $this->getTableName()), $parameters, $parameterTypes);
         $result = $statement->fetchAll();
-        return (!empty($result) ? $result[0] : null);
+        if (empty($result)) {
+            return null;
+        }
+
+        $attendee = $result[0];
+        $this->update(['raffled' => 1], ['id' => $attendee['id']]);
+        return $attendee;
     }
 
-    public function findByRole(array $roles, $fields = null, $limit = null)
+    public function findForRaffle(array $roles, $fields = null, $limit = null)
     {
         if (empty($fields)) {
             $fields = '*';
@@ -195,7 +182,7 @@ class AttendeeRepository extends Repository
         $parameters = [];
         $parameterTypes = [];
 
-        $query = 'SELECT ' . $fields . ' FROM %s WHERE role IN (';
+        $query = 'SELECT ' . $fields . ' FROM %s WHERE raffled = 0 AND role IN (';
 
         foreach(array_values($roles) as $i => $role) {
             $query .= ($i > 0 ? ', ' : '') . '?';

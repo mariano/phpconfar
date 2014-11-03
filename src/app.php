@@ -314,7 +314,7 @@ $app->match('/raffle/{role}', function($role, Request $request) use($app) {
 	if (in_array('application/json', $request->getAcceptableContentTypes())) {
 		return $app->json($app['db.attendee']->raffle($roles));
 	}
-	$records = $app['db.attendee']->findByRole($roles, ['first_name', 'last_name'], 500);
+	$records = $app['db.attendee']->findForRaffle($roles, ['first_name', 'last_name'], 500);
 	foreach($records as $i => $record) {
 		$records[$i] = trim(implode(' ', $record));
 	}
